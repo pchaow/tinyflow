@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Upload an image</title>
+    <script type="text/javascript" src="bower_components/flow.js/dist/flow.min.js"></script>
+    <script type="text/javascript" src="bower_components/angular/angular.min.js"></script>
+    <script type="text/javascript" src="bower_components/angular-cookies/angular-cookies.min.js"></script>
+    <script type="text/javascript" src="bower_components/ng-flow/dist/ng-flow.min.js"></script>
+    <script type="text/javascript" src="loader.js"></script>
+    <link rel="stylesheet" href="bower_components/semantic-ui/dist/semantic.min.css"/>
+</head>
+<body ng-app="tinymce-upload" style="width: 300px;">
+<div ng-controller="UploadCtrl as self">
+    <div flow-init flow-object="self.myFlow"
+         flow-files-submitted="$flow.upload()"
+         flow-file-success="self.uploadSuccess($file, $message, $flow)">
+        <button class="ui primary button" flow-btn style="margin: 10px;">Select File</button>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+
+    var uploadDialog = {
+        resized: false,
+        iframeOpened: false,
+        timeoutStore: false,
+
+        uploadFinish: function ($url) {
+
+            var w = this.getWin();
+            tinymce = w.tinymce;
+            tinymce.EditorManager.activeEditor.insertContent('<img src="' + $url + '">');
+            this.close();
+        },
+
+        getWin: function () {
+            return (!window.frameElement && window.dialogArguments) || opener || parent || top;
+        },
+
+        close: function () {
+            var t = this;
+
+            // To avoid domain relaxing issue in Opera
+            function close() {
+                tinymce.EditorManager.activeEditor.windowManager.close(window);
+                tinymce = tinyMCE = t.editor = t.params = t.dom = t.dom.doc = null; // Cleanup
+            };
+
+            if (tinymce.isOpera)
+                this.getWin().setTimeout(close, 0);
+            else
+                close();
+        }
+    }
+
+    var app = angular.module('tinymce-upload', ['AppConfig', 'flow', 'ngCookies']);
+    app.controller("UploadCtrl", function ($cookies) {
+        console.log("UploadCtrl Start...");
+        var self = this;
+
+        self.myFlow = new Flow({
+            target: '/tinymce-upload',
+            singleFile: true,
+            method: 'post',
+            testChunks: false,
+            headers: function (file, chunk, isTest) {
+                return {
+                    'X-XSRF-TOKEN': $cookies.get('XSRF-TOKEN')// call func for getting a cookie
+                }
+            }
+        })
+
+        self.uploadSuccess = function ($file, $message, $flow) {
+            $response = JSON.parse($message);
+            $url = $response.url;
+            uploadDialog.uploadFinish($url);
+        }
+    });
+
+
+</script>
+</body>
+</html>
