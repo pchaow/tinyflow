@@ -9,13 +9,13 @@ How I can install it?
  1. Clone or download this project
  2. extract project file to tinymce's plugin folder.
  
-usage
+Usage
 =====
  1.  open `dialog-v5.htm` inside plugin directory.
  2. locate the `self.myFlow` in dialog-v5.html.
  3. modify `target` property in `self.myFlow` to your upload url.
 
-example
+Example
 =======
 
 ````javascript
